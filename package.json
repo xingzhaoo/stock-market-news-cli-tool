@@ -1,0 +1,23 @@
+{
+  "name": "google-stock-news-cli",
+  "version": "1.0.0",
+  "description": "A terminal CLI tool to fetch and view latest stock market news of US and Canada from Google News.",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "google-stock-news": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "commander": "^11.1.0",
+    "open": "^10.1.0",
+    "picocolors": "^1.0.1",
+    "prompts": "^2.4.2",
+    "rss-parser": "^3.13.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
