@@ -70,7 +70,9 @@ export async function fetchStockNews({ country, query }) {
       return [];
     }
 
-    return feed.items.map(parseNewsItem);
+    const parsedItems = feed.items.map(parseNewsItem);
+    // Sort descending by date (most recent first)
+    return parsedItems.sort((a, b) => new Date(b.isoDate) - new Date(a.isoDate));
   } catch (error) {
     throw new Error(`Failed to fetch or parse stock news from Google: ${error.message}`);
   }
