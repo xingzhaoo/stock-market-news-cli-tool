@@ -55,4 +55,10 @@ describe('CLI Integration', () => {
       assert.ok(err.stderr.includes('Error: Failed to fetch or parse stock news from Google'));
     }
   });
+
+  it('should not contain unused open import in index.js', async () => {
+    const fs = await import('node:fs/promises');
+    const content = await fs.readFile(cliPath, 'utf8');
+    assert.equal(/import\s+open\s+from\s+['"]open['"]/.test(content), false);
+  });
 });

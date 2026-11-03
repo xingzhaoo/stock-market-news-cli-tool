@@ -49,7 +49,8 @@ export function isToday(dateInput, referenceDate = new Date()) {
 }
 
 /**
- * Strips ASCII control characters (0x00-0x1F, 0x7F) including ANSI escape codes.
+ * Strips ASCII and C1 control characters (0x00-0x1F, 0x7F, 0x80-0x9F) including ANSI escape codes.
+ * Replaces tabs, newlines, and carriage returns with a single space before stripping, then collapses repeated spaces.
  * @param {string} str 
  * @returns {string}
  */
@@ -57,11 +58,17 @@ export function stripControlCharacters(str) {
   if (typeof str !== 'string') {
     return '';
   }
-  // Strip ANSI escape codes
-  const withoutAnsi = str.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '');
-  // Strip ASCII control characters: 0x00-0x1F and 0x7F
-  const withoutControl = withoutAnsi.replace(/[\x00-\x1F\x7F]/g, '');
-  return withoutControl.trim();
+  // 1. Replace tabs, newlines and carriage returns with a single space
+  const normalizedSpaces = str.replace(/[\t\n\r]/g, ' ');
+
+  // 2. Strip ANSI escape codes
+  const withoutAnsi = normalizedSpaces.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '');
+
+  // 3. Strip ASCII control characters (0x00-0x1F and 0x7F) and C1 control characters (U+0080 to U+009F)
+  const withoutControl = withoutAnsi.replace(/[\x00-\x1F\x7F\u0080-\u009F]/g, '');
+
+  // 4. Collapse repeated spaces and trim
+  return withoutControl.replace(/ +/g, ' ').trim();
 }
 
 /**
@@ -83,6 +90,7 @@ export function parseNewsItem(item) {
   // Strip ASCII control characters and ANSI escape sequences
   title = stripControlCharacters(title);
   source = stripControlCharacters(source) || 'Unknown Source';
+  const link = stripControlCharacters(item.link || '');
 
   let isoDate;
   if (item.isoDate) {
@@ -97,10 +105,10 @@ export function parseNewsItem(item) {
   return {
     title,
     source,
-    link: item.link,
+    link,
     pubDate: item.pubDate,
     isoDate,
-    guid: item.guid || item.link
+    guid: item.guid || link
   };
 }
 

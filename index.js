@@ -3,7 +3,6 @@
 import { Command } from 'commander';
 import pc from 'picocolors';
 import prompts from 'prompts';
-import open from 'open';
 
 import { fetchStockNews } from './src/news.js';
 import { displayPretty, displayJson } from './src/display.js';

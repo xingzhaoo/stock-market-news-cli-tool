@@ -2,7 +2,7 @@ process.env.TZ = 'America/Toronto';
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildFeedUrl, parseNewsItem, fetchStockNews, isToday } from '../src/news.js';
+import { buildFeedUrl, parseNewsItem, fetchStockNews, isToday, stripControlCharacters } from '../src/news.js';
 
 describe('news.js', () => {
   it('should have TZ environment variable set to America/Toronto', () => {
@@ -152,6 +152,37 @@ describe('news.js', () => {
       const parsed = parseNewsItem(rawItem);
       assert.equal(parsed.title, 'Clean Headline');
       assert.equal(parsed.source, 'Unknown Source');
+    });
+
+    it('should apply stripControlCharacters to the link in parseNewsItem', () => {
+      const rawItem = {
+        title: 'Headline - Source',
+        link: '\x1b[34mhttps://news.google.com/articles/123\x1b[0m\x00\r\n',
+        pubDate: 'Mon, 02 Nov 2026 12:00:00 GMT'
+      };
+
+      const parsed = parseNewsItem(rawItem);
+      assert.equal(parsed.link, 'https://news.google.com/articles/123');
+    });
+  });
+
+  describe('stripControlCharacters', () => {
+    it('should replace tabs, newlines, and carriage returns with a single space and collapse repeated spaces', () => {
+      const input = 'First\t\nLine\r\n   Second\t\tWord';
+      const output = stripControlCharacters(input);
+      assert.equal(output, 'First Line Second Word');
+    });
+
+    it('should remove C1 control characters in range U+0080 to U+009F', () => {
+      const input = 'Stock\u0080 Market\u0085 Rally\u009F Today';
+      const output = stripControlCharacters(input);
+      assert.equal(output, 'Stock Market Rally Today');
+    });
+
+    it('should handle tabs, newlines, C1 controls and ANSI together', () => {
+      const input = '\t\x1b[32mBreaking\x1b[0m\r\n\u0082News\u009A   Now\n';
+      const output = stripControlCharacters(input);
+      assert.equal(output, 'Breaking News Now');
     });
   });
 
