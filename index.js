@@ -16,14 +16,14 @@ program
   .version('1.0.0')
   .option('-c, --country <type>', 'Country to fetch stock market news for: "us" or "ca"', 'us')
   .option('-s, --search <query>', 'Search term or stock ticker symbol (e.g. AAPL, TD)')
-  .option('-l, --limit <number>', 'Number of news stories to display', (val) => parseInt(val, 10), 10)
+  .option('-l, --limit <number>', 'Number of news stories to display', (val) => parseInt(val, 10), 6)
   .option('-j, --json', 'Output results in JSON format')
   .option('-i, --interactive', 'Interactively select an article to open in your browser')
   .addHelpText('after', `
 Examples:
   $ node index.js
   $ node index.js --country ca
-  $ node index.js --search AAPL --limit 5
+  $ node index.js --search AAPL
   $ node index.js -c ca -s "Royal Bank" -i
   $ node index.js --json > news.json
   `);

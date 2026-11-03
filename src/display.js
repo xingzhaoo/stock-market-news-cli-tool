@@ -61,6 +61,25 @@ export function wrapText(text, width, indent = '') {
   return lines.join('\n');
 }
 
+export const ITEM_COLOR_SCHEMES = [
+  {
+    name: 'cyan',
+    badge: (txt) => pc.bold(pc.cyan(txt)),
+    title: (txt) => pc.bold(pc.cyan(txt)),
+    meta: (source, time) => `${pc.cyan(pc.bold(source))}  •  ${pc.dim(time)}`,
+    link: (txt) => pc.cyan(txt),
+    divider: (len) => pc.cyan('─'.repeat(len))
+  },
+  {
+    name: 'yellow',
+    badge: (txt) => pc.bold(pc.yellow(txt)),
+    title: (txt) => pc.bold(pc.yellow(txt)),
+    meta: (source, time) => `${pc.yellow(pc.bold(source))}  •  ${pc.dim(time)}`,
+    link: (txt) => pc.yellow(txt),
+    divider: (len) => pc.yellow('─'.repeat(len))
+  }
+];
+
 /**
  * Display the header for the stock news CLI.
  * @param {string} country 
@@ -69,7 +88,7 @@ export function wrapText(text, width, indent = '') {
 export function displayHeader(country, query) {
   const title = `GOOGLE STOCK MARKET NEWS`;
   const location = country.toUpperCase() === 'CA' ? '🇨🇦 CANADA' : '🇺🇸 UNITED STATES';
-  const subtitle = query ? `Search: "${query}"` : 'Latest General Market News';
+  const subtitle = query ? `Search: "${query}" (Today's News)` : 'Latest General Market News';
   
   const width = Math.max(title.length, location.length + 3, subtitle.length) + 6;
   const border = '═'.repeat(width);
@@ -98,32 +117,42 @@ export function displayHeader(country, query) {
  * @param {string} [options.query] 
  * @param {number} [options.limit] 
  */
-export function displayPretty(items, { country, query, limit = 10 }) {
+export function displayPretty(items, { country, query, limit = 6 }) {
   displayHeader(country, query);
 
   if (items.length === 0) {
-    console.log(pc.yellow('  No news articles found.'));
+    const emptyMsg = query ? `  No news articles found today for "${query}".` : '  No news articles found.';
+    console.log(pc.yellow(emptyMsg));
     console.log();
     return;
   }
 
-  const articlesToPrint = items.slice(0, limit);
+  // Ensure items are strictly sorted from most recent to least recent
+  const sortedItems = [...items].sort((a, b) => {
+    const dateA = new Date(a.isoDate || a.pubDate).getTime() || 0;
+    const dateB = new Date(b.isoDate || b.pubDate).getTime() || 0;
+    return dateB - dateA;
+  });
+
+  const articlesToPrint = sortedItems.slice(0, limit);
   const termWidth = process.stdout.columns || 80;
   const contentWidth = Math.max(40, termWidth - 8);
 
   articlesToPrint.forEach((item, index) => {
-    const numStr = pc.bold(pc.green(`[${index + 1}]`));
+    // Alternate between two colors for neighboring news items
+    const scheme = ITEM_COLOR_SCHEMES[index % 2];
+    const numStr = scheme.badge(`[${index + 1}]`);
     const relativeTime = formatRelativeTime(item.isoDate);
-    const meta = `${pc.magenta(pc.bold(item.source))}  •  ${pc.yellow(relativeTime)}`;
+    const meta = scheme.meta(item.source, relativeTime);
     
     // Format title and handle wrapping
-    const formattedTitle = pc.white(pc.bold(item.title));
+    const formattedTitle = scheme.title(item.title);
     const titleLines = wrapText(formattedTitle, contentWidth, '     ');
     
     console.log(` ${numStr}  ${titleLines.trimStart()}`);
     console.log(`     ${meta}`);
-    console.log(`     ${pc.cyan(item.link)}`);
-    console.log(pc.dim('     ' + '─'.repeat(contentWidth)));
+    console.log(`     ${scheme.link(item.link)}`);
+    console.log(`     ${scheme.divider(contentWidth)}`);
   });
 
   console.log(pc.dim(`  Showing ${articlesToPrint.length} of ${items.length} articles.`));
@@ -135,7 +164,12 @@ export function displayPretty(items, { country, query, limit = 10 }) {
  * @param {Array<object>} items 
  * @param {number} limit 
  */
-export function displayJson(items, limit = 10) {
-  const result = items.slice(0, limit);
+export function displayJson(items, limit = 6) {
+  const sortedItems = [...items].sort((a, b) => {
+    const dateA = new Date(a.isoDate || a.pubDate).getTime() || 0;
+    const dateB = new Date(b.isoDate || b.pubDate).getTime() || 0;
+    return dateB - dateA;
+  });
+  const result = sortedItems.slice(0, limit);
   console.log(JSON.stringify(result, null, 2));
 }
