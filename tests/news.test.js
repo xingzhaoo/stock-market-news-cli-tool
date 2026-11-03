@@ -1,8 +1,13 @@
+process.env.TZ = 'America/Toronto';
+
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildFeedUrl, parseNewsItem, fetchStockNews, isToday } from '../src/news.js';
 
 describe('news.js', () => {
+  it('should have TZ environment variable set to America/Toronto', () => {
+    assert.equal(process.env.TZ, 'America/Toronto');
+  });
   describe('buildFeedUrl', () => {
     it('should build US feed URL with default query', () => {
       const url = buildFeedUrl('us');
@@ -111,6 +116,42 @@ describe('news.js', () => {
       const parsed = parseNewsItem(rawItem);
       assert.equal(parsed.title, 'Fed Rate Decision - Live Updates');
       assert.equal(parsed.source, 'Reuters');
+    });
+
+    it('should strip ANSI escape codes from title and source', () => {
+      const rawItem = {
+        title: '\x1b[31mHot Stock Surge\x1b[0m - \x1b[1m\x1b[34mFinancial Times\x1b[0m',
+        link: 'https://news.google.com/sample-ansi',
+        pubDate: 'Mon, 02 Nov 2026 12:00:00 GMT'
+      };
+
+      const parsed = parseNewsItem(rawItem);
+      assert.equal(parsed.title, 'Hot Stock Surge');
+      assert.equal(parsed.source, 'Financial Times');
+    });
+
+    it('should strip ASCII control characters (0x00-0x1F and 0x7F) from title and source', () => {
+      const rawItem = {
+        title: 'Market\x00 Watch\x07 Update\x1F - \x08Bloomberg\x7F',
+        link: 'https://news.google.com/sample-control',
+        pubDate: 'Mon, 02 Nov 2026 12:00:00 GMT'
+      };
+
+      const parsed = parseNewsItem(rawItem);
+      assert.equal(parsed.title, 'Market Watch Update');
+      assert.equal(parsed.source, 'Bloomberg');
+    });
+
+    it('should fallback to Unknown Source if source only consists of control characters', () => {
+      const rawItem = {
+        title: 'Clean Headline - \x1b[0m\x00\x07',
+        link: 'https://news.google.com/sample-empty-source',
+        pubDate: 'Mon, 02 Nov 2026 12:00:00 GMT'
+      };
+
+      const parsed = parseNewsItem(rawItem);
+      assert.equal(parsed.title, 'Clean Headline');
+      assert.equal(parsed.source, 'Unknown Source');
     });
   });
 

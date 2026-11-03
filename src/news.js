@@ -49,6 +49,22 @@ export function isToday(dateInput, referenceDate = new Date()) {
 }
 
 /**
+ * Strips ASCII control characters (0x00-0x1F, 0x7F) including ANSI escape codes.
+ * @param {string} str 
+ * @returns {string}
+ */
+export function stripControlCharacters(str) {
+  if (typeof str !== 'string') {
+    return '';
+  }
+  // Strip ANSI escape codes
+  const withoutAnsi = str.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '');
+  // Strip ASCII control characters: 0x00-0x1F and 0x7F
+  const withoutControl = withoutAnsi.replace(/[\x00-\x1F\x7F]/g, '');
+  return withoutControl.trim();
+}
+
+/**
  * Parses a feed item into a structured object.
  * @param {object} item - Parsed RSS item
  * @returns {object}
@@ -63,6 +79,10 @@ export function parseNewsItem(item) {
     source = title.substring(lastDashIndex + 3).trim();
     title = title.substring(0, lastDashIndex).trim();
   }
+
+  // Strip ASCII control characters and ANSI escape sequences
+  title = stripControlCharacters(title);
+  source = stripControlCharacters(source) || 'Unknown Source';
 
   let isoDate;
   if (item.isoDate) {

@@ -7,6 +7,7 @@ import open from 'open';
 
 import { fetchStockNews } from './src/news.js';
 import { displayPretty, displayJson } from './src/display.js';
+import { openArticle } from './src/interactive.js';
 
 const program = new Command();
 
@@ -85,8 +86,7 @@ async function main() {
 
       if (response.index !== undefined && response.index !== -1) {
         const selected = articles[response.index];
-        console.log(pc.green(`Opening "${selected.title}" in browser...`));
-        await open(selected.link);
+        await openArticle(selected);
       }
     }
 
