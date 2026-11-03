@@ -1,6 +1,6 @@
 # Google Stock Market News CLI Tool
 
-A fast, colorized Node.js command-line application to fetch and display the latest stock market news for the United States and Canada from Google News — without requiring any API keys or registration.
+A fast, colorized Node.js command-line application to fetch and display the latest stock market news for the United States and Canada from Google News without requiring any API keys or registration.
 
 ---
 

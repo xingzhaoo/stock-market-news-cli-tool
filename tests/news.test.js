@@ -35,20 +35,33 @@ describe('news.js', () => {
   });
 
   describe('isToday', () => {
-    const fixedToday = new Date('2026-11-02T12:00:00Z');
+    // Reference date: Nov 2, 2026 at 12:00 PM local time
+    const fixedToday = new Date(2026, 10, 2, 12, 0, 0);
 
-    it('should return true for a date on the same day', () => {
-      const sameDay = '2026-11-02T16:30:00Z';
+    it('should return true for a date on the same local day', () => {
+      const sameDay = new Date(2026, 10, 2, 16, 30, 0);
       assert.equal(isToday(sameDay, fixedToday), true);
+      assert.equal(isToday(sameDay.toISOString(), fixedToday), true);
     });
 
     it('should return false for yesterday date', () => {
-      const yesterday = '2026-11-01T23:59:00Z';
+      const yesterday = new Date(2026, 10, 1, 23, 59, 0);
       assert.equal(isToday(yesterday, fixedToday), false);
+      assert.equal(isToday(yesterday.toISOString(), fixedToday), false);
+    });
+
+    it('should not count yesterday 9 PM local time (which is today 2 AM UTC in Toronto) as today when comparing local dates', () => {
+      // Local reference time: Nov 2 at 9:00 AM
+      const todayMorning = new Date(2026, 10, 2, 9, 0, 0);
+      // Article from 9:00 PM yesterday local time (which is 2:00 AM UTC today in Toronto UTC-5)
+      const yesterdayEvening = new Date(2026, 10, 1, 21, 0, 0);
+
+      assert.equal(isToday(yesterdayEvening, todayMorning), false);
+      assert.equal(isToday(yesterdayEvening.toISOString(), todayMorning), false);
     });
 
     it('should return false for older dates', () => {
-      const oldDate = '2026-10-15T10:00:00Z';
+      const oldDate = new Date(2026, 9, 15, 10, 0, 0);
       assert.equal(isToday(oldDate, fixedToday), false);
     });
 
@@ -102,26 +115,26 @@ describe('news.js', () => {
   });
 
   describe('fetchStockNews', () => {
-    const referenceDate = new Date('2026-11-02T14:00:00Z');
+    const referenceDate = new Date(2026, 10, 2, 14, 0, 0);
 
     const mockItems = [
       {
         title: 'Yesterday Article - Source A',
         link: 'https://example.com/1',
         pubDate: 'Sun, 01 Nov 2026 20:00:00 GMT',
-        isoDate: '2026-11-01T20:00:00.000Z'
+        isoDate: new Date(2026, 10, 1, 20, 0, 0).toISOString()
       },
       {
         title: 'Today Later Article - Source B',
         link: 'https://example.com/2',
         pubDate: 'Mon, 02 Nov 2026 13:00:00 GMT',
-        isoDate: '2026-11-02T13:00:00.000Z'
+        isoDate: new Date(2026, 10, 2, 13, 0, 0).toISOString()
       },
       {
         title: 'Today Morning Article - Source C',
         link: 'https://example.com/3',
         pubDate: 'Mon, 02 Nov 2026 09:00:00 GMT',
-        isoDate: '2026-11-02T09:00:00.000Z'
+        isoDate: new Date(2026, 10, 2, 9, 0, 0).toISOString()
       }
     ];
 

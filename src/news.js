@@ -30,7 +30,7 @@ export function buildFeedUrl(country, query) {
 
 /**
  * Checks if a given date represents "today" relative to a reference date.
- * Compares against local calendar day and UTC calendar day to handle timezone boundaries.
+ * Compares against local calendar day only.
  * @param {string|Date} dateInput 
  * @param {Date} [referenceDate] 
  * @returns {boolean}
@@ -41,19 +41,11 @@ export function isToday(dateInput, referenceDate = new Date()) {
     return false;
   }
 
-  const isLocalSameDay = (
+  return (
     date.getFullYear() === referenceDate.getFullYear() &&
     date.getMonth() === referenceDate.getMonth() &&
     date.getDate() === referenceDate.getDate()
   );
-
-  const isUtcSameDay = (
-    date.getUTCFullYear() === referenceDate.getUTCFullYear() &&
-    date.getUTCMonth() === referenceDate.getUTCMonth() &&
-    date.getUTCDate() === referenceDate.getUTCDate()
-  );
-
-  return isLocalSameDay || isUtcSameDay;
 }
 
 /**
